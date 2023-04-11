@@ -1,3 +1,5 @@
+import { getCactusRects, setupCactus, updateCactus } from "./cactus.js";
+import { getDinoRect, setDinoLoose, setUpDino, updateDino } from "./dino.js";
 import { setupGround, updateGround } from "./ground.js";
 
 const WORLD_WIDTH = 100;
@@ -23,12 +25,42 @@ function update(time) {
   const deltaTime = time - lastTime;
 
   updateGround(deltaTime, speedScale);
+  updateDino(deltaTime, speedScale);
+  updateCactus(deltaTime, speedScale);
   updateSpeedScale(deltaTime);
   updateScore(deltaTime);
+  if (checkLoose()) {
+    return handleLoose();
+  }
 
   lastTime = time;
 
   window.requestAnimationFrame(update);
+}
+
+function checkLoose() {
+  const dinoRect = getDinoRect();
+  return getCactusRects().some((cactusRect) =>
+    isCollision(cactusRect, dinoRect)
+  );
+}
+
+function isCollision(rect1, rect2) {
+  return (
+    rect1.left < rect2.right &&
+    rect1.top < rect2.bottom &&
+    rect1.right > rect2.left &&
+    rect1.bottom > rect2.top
+  );
+}
+
+function handleLoose() {
+  setDinoLoose();
+  //Giving time to show that You lost
+  setTimeout(() => {
+    document.addEventListener("keydown", handleStart, { once: true });
+    startElem.classList.remove("hide");
+  }, 100);
 }
 
 function updateScore(deltaTime) {
@@ -39,6 +71,8 @@ function updateScore(deltaTime) {
 function handleStart() {
   lastTime = null;
   setupGround();
+  setUpDino();
+  setupCactus();
   speedScale = 1;
   score = 0;
   startElem.classList.add("hide");
